@@ -5,129 +5,161 @@ import Link from 'next/link'
 import { DynamicIcon } from '../DynamicIcon'
 import { WidgetContainer } from './WidgetContainer'
 
-// 定义图标组件
 const LinkIcon = ({ icon, hasId }: { icon: string; hasId: boolean }) => {
-  if (!icon) return null; // 如果没有图标就不显示，只显示文字
+  const { isMobile, isTablet, isDesktop, isWidescreen } = useScreenSize()
 
+  let iconSize
+  if (isMobile || isTablet) {
+    iconSize = 15
+  }
+  if (isDesktop) {
+    iconSize = isDesktop && hasId ? 15 : 20
+  }
+  if (isWidescreen) {
+    iconSize = hasId ? 20 : 30
+  }
+
+  if (icon === '') {
+    return (
+      <DynamicIcon
+        nameIcon="FaQuestionCircle"
+        propsIcon={{
+          size: iconSize,
+        }}
+      />
+    )
+  }
   if (isValidUrl(icon) || icon.startsWith('/')) {
     return (
       <img
-        className="w-5 h-5 drop-shadow-sm mr-2" // 增加 mr-2 让图标和文字有点间距
+        className="aspect-square"
+        height={iconSize}
+        width={iconSize}
         src={icon}
-        alt="icon"
+        alt={'social-logo'}
       />
     )
   }
   return (
-    <div className="drop-shadow-sm mr-2">
-      <DynamicIcon
-        nameIcon={icon}
-        propsIcon={{ size: 18 }} //稍微调小一点适配文字
-      />
-    </div>
+    <DynamicIcon
+      nameIcon={icon}
+      propsIcon={{
+        size: iconSize,
+      }}
+    />
   )
 }
 
-// 辅助函数：定义品牌颜色 (保持你的颜色修复逻辑)
-const getBrandGradient = (url: string, iconName: string): string => {
-  const target = (url + iconName).toLowerCase();
-  
-  if (target.includes('github')) return 'linear-gradient(135deg, #2b3137 0%, #24292e 100%)'; 
-  if (target.includes('twitter') || target.includes('x.com')) return 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)'; 
-  if (target.includes('mail') || target.includes('email')) return 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; 
-  if (target.includes('linkedin')) return 'linear-gradient(135deg, #0077b5 0%, #005582 100%)'; 
-  if (target.includes('bilibili')) return 'linear-gradient(135deg, #00a1d6 0%, #008bb5 100%)'; 
-  if (target.includes('instagram')) return 'linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%)'; 
-  if (target.includes('rss')) return 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'; 
-
-  // 默认深灰色 (用于普通按钮)
-  return 'linear-gradient(135deg, #525252 0%, #404040 100%)';
-}
-
-// 使用 any 绕过类型检查，防止 Build 失败
+// 使用 any 绕过类型检查
 export const ProfileWidget = ({ data }: { data: any }) => {
-  const { isMobile } = useScreenSize()
-
-  // 1. 强力查找头像地址
-  const avatarSrc = data?.image || data?.avatar || data?.logo || data?.icon || data?.url || '';
-  
-  // 2. 查找昵称和简介
-  const name = data?.name || data?.title || 'Profile';
-  const bio = data?.description || data?.bio || data?.body || '';
+  // 安全获取头像地址，优先用原始结构 data.logo.src
+  const logoSrc = data?.logo?.src || data?.image || data?.avatar || '';
 
   return (
     <WidgetContainer>
-      <div className="flex flex-col gap-6">
-        
-        {/* 上半部分：头像和个人信息 */}
-        <div className="flex flex-col items-center justify-center text-center">
-            {/* 头像容器 */}
-            <div className="relative group w-fit mx-auto mb-4">
-              <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full blur opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-              <div className="relative w-24 h-24 rounded-full ring-4 ring-neutral-100 dark:ring-neutral-800 overflow-hidden shadow-xl bg-neutral-800">
-                {avatarSrc ? (
-                  <img
-                    src={avatarSrc}
-                    alt="avatar"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-500">?</div>
-                )}
-              </div>
-            </div>
-
-            {/* 昵称 */}
-            {name && <h2 className="text-xl font-bold text-neutral-900 dark:text-white">{name}</h2>}
-            
-            {/* 简介 (支持 HTML 显示，因为 Bio 里可能有换行) */}
-            {bio && (
-                <div 
-                    className="mt-2 text-sm text-neutral-500 dark:text-neutral-400 max-w-xs mx-auto"
-                    dangerouslySetInnerHTML={{ __html: bio }} 
-                />
+      <div className="w-full h-full">
+        {/* 上半部分：个人信息 */}
+        <div className="flex h-[72%] w-full flex-col items-start overflow-hidden px-3.5 pt-3.5 md:h-3/5 md:flex-row md:items-center md:justify-start md:space-x-3 md:px-3 md:py-2.5 lg:space-x-4 lg:px-5 lg:py-4">
+          <div className="h-full overflow-hidden rotate-0 aspect-square rounded-2xl sm:mb-0 md:rounded-full">
+            {/* 🛑 修复 Build 报错：替换 ImageWithPlaceholder 为普通 img */}
+            {logoSrc ? (
+              <img
+                src={logoSrc}
+                alt="portrait"
+                className="w-full h-full object-cover rounded-2xl md:rounded-full"
+              />
+            ) : (
+              <div className="w-full h-full bg-neutral-200 dark:bg-neutral-800 rounded-2xl md:rounded-full"></div>
             )}
+          </div>
+          <div className="mt-2 flex flex-col justify-between gap-0.5 text-black dark:text-white md:mt-0">
+            <h1 className="mb-2 text-base font-semibold tracking-tighter line-clamp-1 sm:mb-3 sm:text-base sm:tracking-normal md:mb-0 md:text-xl md:font-medium lg:text-2xl">
+              {data?.name || 'Profile'}
+            </h1>
+            <h2 className="hidden text-sm md:line-clamp-1 lg:text-sm">
+              {data?.description}
+            </h2>
+          </div>
         </div>
 
-        {/* 下半部分：社交按钮/链接 (修复为长按钮样式) */}
-        <div className="flex flex-wrap justify-center gap-3">
-          {data?.links?.map((item: any, index: number) => {
-            const backgroundStyle = getBrandGradient(item.url || '', item.icon || '');
+        {/* 下半部分：三个写死的固定按钮 */}
+        <div
+          className={classNames(
+            'h-[28%] w-full md:h-2/5',
+            'md:bg-neutral-100 md:dark:bg-neutral-800'
+          )}
+        >
+          <div className="scrollbar-hide flex h-full w-full flex-row items-center justify-center overflow-scroll px-3.5 pt-1 pb-3 font-medium md:justify-center md:gap-x-1 md:py-2 lg:px-5 lg:py-3 lg:text-sm">
             
-            // 获取按钮文字：优先用 title，没有就用 name
-            const label = item.title || item.name || 'Link';
-
-            return (
-              <Link
-                key={index}
-                href={item.url || '#'}
-                target="_blank"
-                // 恢复为“药丸形”长按钮样式
+             {/* 按钮 1：入会说明 */}
+             <Link
+                key={'aaa'}
+                href={'/about'}
+                rel="noopener noreferrer"
+                // ⬇️ 修复颜色BUG：移除了 bg-gradient-to-tr 和 from-neutral... 等灰色类名
                 className={classNames(
-                  'flex items-center justify-center',
-                  'px-5 py-2.5 rounded-full', // 长胶囊形状
-                  'text-sm font-bold text-white',
-                  'shadow-lg shadow-neutral-300 dark:shadow-neutral-900',
-                  'transition-all duration-300 ease-in-out',
-                  'hover:scale-105 hover:-translate-y-1',
-                  // 如果按钮太少，可以让它们宽一点；如果太多，就自适应
-                  'min-w-[120px] flex-grow md:flex-grow-0' 
+                  'leading-0 w-full transform cursor-pointer items-center justify-center rounded-lg text-white transition duration-300 ease-in-out hover:scale-95 md:h-full md:w-auto md:rounded-xl lg:rounded-2xl',
+                  true
+                    ? 'aspect-square md:aspect-auto md:gap-x-0.5 md:px-1.5 lg:gap-x-1.5 lg:px-3'
+                    : 'aspect-square',
+                   'flex'
                 )}
-                // 强制应用颜色修复
+                // ⬇️ 修复颜色BUG：移除了 !important，使用标准 background 属性
                 style={{
-                  background: backgroundStyle, 
-                  border: '1px solid rgba(255,255,255,0.1)' 
+                  background: 'linear-gradient(to top right, #b80ce4, #2c16ab)',
                 }}
               >
-                {/* 图标 */}
-                <LinkIcon icon={item.icon} hasId={!!data.id} />
-                {/* 文字 */}
-                <span>{label}</span>
+                <LinkIcon icon={'FaCrown'} hasId={!!true} />
+                <p className="hidden md:block md:text-xs lg:text-base">
+                  {'入会说明'}
+                </p>
               </Link>
-            )
-          })}
-        </div>
 
+              {/* 按钮 2：下载说明 */}
+              <Link
+                key={'bbb'}
+                href={'/download'}
+                rel="noopener noreferrer"
+                className={classNames(
+                  'leading-0 w-full transform cursor-pointer items-center justify-center rounded-lg text-white transition duration-300 ease-in-out hover:scale-95 md:h-full md:w-auto md:rounded-xl lg:rounded-2xl',
+                  true
+                    ? 'aspect-square md:aspect-auto md:gap-x-0.5 md:px-1.5 lg:gap-x-1.5 lg:px-3'
+                    : 'aspect-square',
+                   'flex'
+                )}
+                style={{
+                  background: 'linear-gradient(to top right, #eb9b34, #f0a94d)',
+                }}
+              >
+                <LinkIcon icon={'IoMdCloudDownload'} hasId={!!true} />
+                <p className="hidden md:block md:text-xs lg:text-base">
+                  {'下载说明'}
+                </p>
+              </Link>
+
+               {/* 按钮 3：更多资源 */}
+               <Link
+                key={'ccc'}
+                href={'/friends'}
+                rel="noopener noreferrer"
+                className={classNames(
+                  'leading-0 w-full transform cursor-pointer items-center justify-center rounded-lg text-white transition duration-300 ease-in-out hover:scale-95 md:h-full md:w-auto md:rounded-xl lg:rounded-2xl',
+                  true
+                    ? 'aspect-square md:aspect-auto md:gap-x-0.5 md:px-1.5 lg:gap-x-1.5 lg:px-3'
+                    : 'aspect-square',
+                   'flex'
+                )}
+                style={{
+                  background: 'linear-gradient(to top right, #0a69c6, #0088fa)',
+                }}
+              >
+                <LinkIcon icon={'HiOutlineViewGridAdd'} hasId={!!true} />
+                <p className="hidden md:block md:text-xs lg:text-base">
+                  {'更多资源'}
+                </p>
+              </Link>
+          </div>
+        </div>
       </div>
     </WidgetContainer>
   )
