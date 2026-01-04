@@ -1,4 +1,5 @@
 import { BlockDataType, BlockEnum, BlockType } from '@/src/types/blog'
+import { EncryptedCallout } from './EncryptedCallout' 
 import {
   Bookmark,
   BulletedList,
@@ -64,7 +65,7 @@ const getBlockComponent = (blockType: BlockType) => {
     case BlockEnum.pdf:
       return Pdf
     case BlockEnum.callout:
-      return Callout
+      return EncryptedCallout
     case BlockEnum.divider:
       return Divider
     case BlockEnum.table_row:
