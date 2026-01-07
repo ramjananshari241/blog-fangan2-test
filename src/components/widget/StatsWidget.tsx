@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { WidgetContainer } from './WidgetContainer'
 
 // 硬编码商家编号
-const SHOP_CODE = "PRO-000"
+const SHOP_CODE = "PRO-001A"
 
 export const StatsWidget = ({ data }: { data: BlogStats }) => {
   const [showModal, setShowModal] = useState(false)
@@ -71,7 +71,7 @@ export const StatsWidget = ({ data }: { data: BlogStats }) => {
             <h3 className="text-xl font-bold text-white mb-2 tracking-wide drop-shadow-sm">
               👑永久会员：￥000
             </h3>
-            <p className="text-xs text-gray-400 mb-6 font-medium">
+            <p className="text-xs text-gray-400 mb-6 font-medium leading-relaxed">
               请打开网页右下角客服工具发送当前站点编号，按照指引完成注册及购买，点击复制👇
             </p>
             
@@ -111,6 +111,20 @@ export const StatsWidget = ({ data }: { data: BlogStats }) => {
             >
               关闭
             </button>
+
+            {/* 👇 修改点：带链接的底部支持信息 */}
+            <p className="mt-4 text-[10px] text-gray-500/60 font-light tracking-wide">
+              当前服务由 PRO+ 寄售平台提供支持 · 详情请查看{' '}
+              <a 
+                href="https://pro-plus.top" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-gray-300 transition-colors underline decoration-gray-500/30 underline-offset-2 cursor-pointer"
+              >
+                pro-plus.top
+              </a>
+            </p>
+
           </div>
         </div>
       </div>,
