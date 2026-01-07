@@ -1,17 +1,17 @@
 import { BlogStats } from '@/src/types/blog'
 import React, { useState, useEffect } from 'react'
-// 使用相对路径，彻底解决 Cloudflare 无法解析 @ 别名的问题
 // @ts-ignore
-import { useGlobal } from '../../../lib/global' 
+// 尝试相对路径指向 src/lib/global，这是 Anzifan 模板最常用的路径
+import { useGlobal } from '../../lib/global' 
 import { WidgetContainer } from './WidgetContainer'
 
 /**
- * 商家定制版 StatsWidget - Anzifan 项目专用
+ * PRO+ 商家定制版 - StatsWidget (单按钮版)
  */
 export const StatsWidget = ({ data }: { data: BlogStats }) => {
   const [mounted, setMounted] = useState(false)
   
-  // 获取 Notion 数据库的全局数据
+  // 获取全局数据以读取 Notion 数据库内容
   // @ts-ignore
   const { allPages } = useGlobal() 
 
@@ -22,29 +22,29 @@ export const StatsWidget = ({ data }: { data: BlogStats }) => {
   if (!mounted) return null
 
   /**
-   * 动态链接获取逻辑：
-   * 找到 slug 为 stats 的条目，读取 repost 属性
+   * 链接读取逻辑：
+   * 在数据库中寻找 slug 为 stats 的那一行，读取 repost 属性
    */
-  const statsData = allPages?.find((p: any) => p.slug === 'stats')
-  const purchaseLink = statsData?.repost || '#'
+  const statsWidgetItem = allPages?.find((p: any) => p.slug === 'stats')
+  const purchaseLink = statsWidgetItem?.repost || '#'
 
   return (
     <WidgetContainer>
       <style jsx global>{`
         @keyframes shimmer { 0% { transform: translateX(-150%) skewX(-20deg); } 100% { transform: translateX(150%) skewX(-20deg); } }
         @keyframes borderFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        .animate-shimmer { animation: shimmer 2s infinite linear; }
+        .animate-shimmer { animation: shimmer 2.5s infinite linear; }
         .animate-border-flow { background-size: 200% 200%; animation: borderFlow 4s ease infinite; }
       `}</style>
 
       <div className="relative h-full w-full group/card transition-all duration-300">
-        {/* 背景彩虹流光 */}
+        {/* 外围流光 */}
         <div className="absolute -inset-[1px] rounded-[26px] bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 opacity-0 group-hover/card:opacity-70 blur-sm animate-border-flow transition-opacity duration-500"></div>
 
-        {/* 主卡片容器 */}
-        <div className="relative h-full w-full overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-[#0d0d0e]/80 backdrop-blur-2xl p-4 sm:p-6 flex flex-col justify-between min-h-[175px]">
+        {/* 容器主体 */}
+        <div className="relative h-full w-full overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-[#0e0e0f]/80 backdrop-blur-2xl p-4 sm:p-6 flex flex-col justify-between min-h-[170px]">
           
-          {/* 标题区域：带绿色呼吸灯 */}
+          {/* 标题：右侧带呼吸灯 */}
           <div className="flex items-center justify-center gap-2.5 mb-6 mt-1">
              <h2 className="text-lg sm:text-2xl font-black text-white tracking-wide antialiased">
                作品购买渠道
@@ -55,14 +55,14 @@ export const StatsWidget = ({ data }: { data: BlogStats }) => {
              </span>
           </div>
 
-          {/* 核心购买按钮 */}
-          <div className="flex flex-col gap-3 w-full mb-2"> 
+          {/* 购买按钮 */}
+          <div className="flex flex-col gap-3 w-full mb-4"> 
               <button 
                 onClick={() => {
-                  if (purchaseLink && purchaseLink !== '#') {
+                  if (purchaseLink !== '#') {
                     window.open(purchaseLink, '_blank')
                   } else {
-                    console.log('Merchant Link not configured')
+                    console.log('Link not found in Notion')
                   }
                 }} 
                 type="button" 
@@ -70,13 +70,13 @@ export const StatsWidget = ({ data }: { data: BlogStats }) => {
                   bg-red-600 text-white text-[13px] sm:text-sm font-black tracking-[0.2em] transition-all active:scale-95 shadow-lg shadow-red-900/40" 
               >
                 <span className="relative z-10 uppercase">立即前往购买</span>
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover/btn:animate-shimmer z-0"></div>
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:animate-shimmer z-0"></div>
               </button>
           </div>
           
-          {/* 底部支持文本：右下角对齐，并上移 (pb-2) */}
-          <div className="mt-auto flex justify-end items-center pr-1 pb-2">
-            <span className="text-[7px] sm:text-[9px] text-gray-500/50 font-bold tracking-[0.15em] uppercase antialiased">
+          {/* 底部标注：右下角，并稍微上移 */}
+          <div className="mt-auto flex justify-end items-center pr-1 mb-1">
+            <span className="text-[7px] sm:text-[9px] text-gray-500/40 font-bold tracking-[0.1em] uppercase antialiased">
               PRO+ SUPPORT
             </span>
           </div>
