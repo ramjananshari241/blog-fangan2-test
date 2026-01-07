@@ -1,163 +1,88 @@
 /* eslint-disable @next/next/no-img-element */
-import { useScreenSize } from '@/src/hooks/useScreenSize'
-import { classNames, isValidUrl } from '@/src/lib/util'
-import Link from 'next/link'
-import { DynamicIcon } from '../DynamicIcon'
+import React, { useState, useEffect } from 'react'
 import { WidgetContainer } from './WidgetContainer'
 
-const LinkIcon = ({ icon, hasId }: { icon: string; hasId: boolean }) => {
-  const { isMobile, isTablet, isDesktop, isWidescreen } = useScreenSize()
+/**
+ * 商家定制版 StatsWidget
+ * 深度模仿 ProfileWidget 逻辑，实现直接读取 Notion 数据库属性
+ */
+export const StatsWidget = (props: any) => {
+  const { data } = props
+  const [mounted, setMounted] = useState(false)
 
-  let iconSize
-  if (isMobile || isTablet) {
-    iconSize = 15
-  }
-  if (isDesktop) {
-    iconSize = isDesktop && hasId ? 15 : 20
-  }
-  if (isWidescreen) {
-    iconSize = hasId ? 20 : 30
-  }
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
-  if (icon === '') {
-    return (
-      <DynamicIcon
-        nameIcon="FaQuestionCircle"
-        propsIcon={{
-          size: iconSize,
-        }}
-      />
-    )
-  }
-  if (isValidUrl(icon) || icon.startsWith('/')) {
-    return (
-      <img
-        className="aspect-square"
-        height={iconSize}
-        width={iconSize}
-        src={icon}
-        alt={'social-logo'}
-      />
-    )
-  }
-  return (
-    <DynamicIcon
-      nameIcon={icon}
-      propsIcon={{
-        size: iconSize,
-      }}
-    />
-  )
-}
+  if (!mounted) return null
 
-// 使用 any 绕过类型检查
-export const ProfileWidget = ({ data }: { data: any }) => {
-  // 安全获取头像地址，优先用原始结构 data.logo.src
-  const logoSrc = data?.logo?.src || data?.image || data?.avatar || '';
+  /**
+   * 🛠️ 深度模仿 Profile 读取逻辑
+   * 在 ProfileWidget 中，data.description 对应的是 Excerpt (摘要)
+   * 我们在这里增加对 repost 的探测，这是最稳健的方案
+   */
+  const purchaseLink = 
+    data?.repost ||             // 优先尝试直接读取 repost 属性
+    data?.description ||        // 模仿 Profile 读取 Excerpt (摘要) 的逻辑
+    data?.link ||               // 尝试自动映射的 link
+    data?.url ||                // 尝试自动映射的 url
+    '#';
 
   return (
     <WidgetContainer>
-      <div className="w-full h-full">
-        {/* 上半部分：个人信息 */}
-        <div className="flex h-[72%] w-full flex-col items-start overflow-hidden px-3.5 pt-3.5 md:h-3/5 md:flex-row md:items-center md:justify-start md:space-x-3 md:px-3 md:py-2.5 lg:space-x-4 lg:px-5 lg:py-4">
-          <div className="h-full overflow-hidden rotate-0 aspect-square rounded-2xl sm:mb-0 md:rounded-full">
-            {/* 🛑 修复 Build 报错：替换 ImageWithPlaceholder 为普通 img */}
-            {logoSrc ? (
-              <img
-                src={logoSrc}
-                alt="portrait"
-                className="w-full h-full object-cover rounded-2xl md:rounded-full"
-              />
-            ) : (
-              <div className="w-full h-full bg-neutral-200 dark:bg-neutral-800 rounded-2xl md:rounded-full"></div>
-            )}
+      {/* 注入 iOS 风格动画 */}
+      <style jsx global>{`
+        @keyframes shimmer { 0% { transform: translateX(-150%) skewX(-20deg); } 100% { transform: translateX(150%) skewX(-20deg); } }
+        @keyframes borderFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .animate-shimmer { animation: shimmer 2.5s infinite linear; }
+        .animate-border-flow { background-size: 200% 200%; animation: borderFlow 4s ease infinite; }
+      `}</style>
+
+      <div className="relative h-full w-full group/card transition-all duration-300">
+        {/* 背景流光边缘 - 与整体风格对齐 */}
+        <div className="absolute -inset-[1px] rounded-[26px] bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 opacity-0 group-hover/card:opacity-70 blur-sm animate-border-flow transition-opacity duration-500"></div>
+
+        {/* 毛玻璃主体容器 - 模仿 Profile 容器质感但保持 iOS 深色风格 */}
+        <div className="relative h-full w-full overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-[#0e0e0f]/80 backdrop-blur-2xl p-4 sm:p-6 flex flex-col justify-between min-h-[175px]">
+          
+          {/* 标题区域：保留您要求的绿色呼吸灯 */}
+          <div className="flex items-center justify-center gap-2.5 mb-6 mt-1">
+             <h2 className="text-lg sm:text-2xl font-black text-white tracking-wide antialiased">
+               作品购买渠道
+             </h2>
+             <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]"></span>
+             </span>
           </div>
-          <div className="mt-2 flex flex-col justify-between gap-0.5 text-black dark:text-white md:mt-0">
-            <h1 className="mb-2 text-base font-semibold tracking-tighter line-clamp-1 sm:mb-3 sm:text-base sm:tracking-normal md:mb-0 md:text-xl md:font-medium lg:text-2xl">
-              {data?.name || 'Profile'}
-            </h1>
-            <h2 className="hidden text-sm md:line-clamp-1 lg:text-sm">
-              {data?.description}
-            </h2>
+
+          {/* 核心按钮区域：模仿 Profile 的 Link 交互感，但使用购买样式 */}
+          <div className="flex flex-col gap-3 w-full mb-2"> 
+              <button 
+                onClick={() => {
+                  // 只要字符串里包含 http，就认为是有效链接
+                  if (purchaseLink && purchaseLink !== '#' && purchaseLink.toString().includes('http')) {
+                    window.open(purchaseLink.toString().trim(), '_blank')
+                  } else {
+                    // 弹窗提示，并打印当前 data 结构供调试
+                    alert(`未在 stats 挂件中探测到链接。\n\n当前读取到的值为: "${purchaseLink}"\n\n请尝试在 Notion 数据库中将链接填入 stats 行的 [repost] 栏或 [excerpt] 栏。`)
+                    console.log('StatsWidget Received Data:', data)
+                  }
+                }} 
+                type="button" 
+                className="group/btn relative w-full h-12 rounded-xl overflow-hidden
+                  bg-red-600 text-white text-[13px] sm:text-sm font-black tracking-[0.2em] transition-all active:scale-95 shadow-lg shadow-red-900/40" 
+              >
+                <span className="relative z-10 uppercase font-black">立即前往购买</span>
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover/btn:animate-shimmer z-0 pointer-events-none"></div>
+              </button>
           </div>
-        </div>
-
-        {/* 下半部分：三个写死的固定按钮 */}
-        <div
-          className={classNames(
-            'h-[28%] w-full md:h-2/5',
-            'md:bg-neutral-100 md:dark:bg-neutral-800'
-          )}
-        >
-          <div className="scrollbar-hide flex h-full w-full flex-row items-center justify-center overflow-scroll px-3.5 pt-1 pb-3 font-medium md:justify-center md:gap-x-1 md:py-2 lg:px-5 lg:py-3 lg:text-sm">
-            
-             {/* 按钮 1：入会说明 */}
-             <Link
-                key={'aaa'}
-                href={'/about'}
-                rel="noopener noreferrer"
-                // ⬇️ 修复颜色BUG：移除了 bg-gradient-to-tr 和 from-neutral... 等灰色类名
-                className={classNames(
-                  'leading-0 w-full transform cursor-pointer items-center justify-center rounded-lg text-white transition duration-300 ease-in-out hover:scale-95 md:h-full md:w-auto md:rounded-xl lg:rounded-2xl',
-                  true
-                    ? 'aspect-square md:aspect-auto md:gap-x-0.5 md:px-1.5 lg:gap-x-1.5 lg:px-3'
-                    : 'aspect-square',
-                   'flex'
-                )}
-                // ⬇️ 修复颜色BUG：移除了 !important，使用标准 background 属性
-                style={{
-                  background: 'linear-gradient(to top right, #b80ce4, #2c16ab)',
-                }}
-              >
-                <LinkIcon icon={'FaCrown'} hasId={!!true} />
-                <p className="hidden md:block md:text-xs lg:text-base">
-                  {'入会说明'}
-                </p>
-              </Link>
-
-              {/* 按钮 2：下载说明 */}
-              <Link
-                key={'bbb'}
-                href={'/download'}
-                rel="noopener noreferrer"
-                className={classNames(
-                  'leading-0 w-full transform cursor-pointer items-center justify-center rounded-lg text-white transition duration-300 ease-in-out hover:scale-95 md:h-full md:w-auto md:rounded-xl lg:rounded-2xl',
-                  true
-                    ? 'aspect-square md:aspect-auto md:gap-x-0.5 md:px-1.5 lg:gap-x-1.5 lg:px-3'
-                    : 'aspect-square',
-                   'flex'
-                )}
-                style={{
-                  background: 'linear-gradient(to top right, #eb9b34, #f0a94d)',
-                }}
-              >
-                <LinkIcon icon={'IoMdCloudDownload'} hasId={!!true} />
-                <p className="hidden md:block md:text-xs lg:text-base">
-                  {'下载说明'}
-                </p>
-              </Link>
-
-               {/* 按钮 3：更多资源 */}
-               <Link
-                key={'ccc'}
-                href={'/friends'}
-                rel="noopener noreferrer"
-                className={classNames(
-                  'leading-0 w-full transform cursor-pointer items-center justify-center rounded-lg text-white transition duration-300 ease-in-out hover:scale-95 md:h-full md:w-auto md:rounded-xl lg:rounded-2xl',
-                  true
-                    ? 'aspect-square md:aspect-auto md:gap-x-0.5 md:px-1.5 lg:gap-x-1.5 lg:px-3'
-                    : 'aspect-square',
-                   'flex'
-                )}
-                style={{
-                  background: 'linear-gradient(to top right, #0a69c6, #0088fa)',
-                }}
-              >
-                <LinkIcon icon={'HiOutlineViewGridAdd'} hasId={!!true} />
-                <p className="hidden md:block md:text-xs lg:text-base">
-                  {'更多资源'}
-                </p>
-              </Link>
+          
+          {/* 底部信息：移至右下角，使用浅灰色，并增加 pb-2 向上抬升 */}
+          <div className="mt-auto flex justify-end items-center pr-1 pb-2">
+            <span className="text-[7px] sm:text-[9px] text-gray-500/40 font-bold tracking-[0.15em] uppercase antialiased">
+              PRO+ SUPPORT
+            </span>
           </div>
         </div>
       </div>
