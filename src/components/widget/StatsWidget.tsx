@@ -3,12 +3,10 @@ import React, { useState, useEffect } from 'react'
 import { WidgetContainer } from './WidgetContainer'
 
 /**
- * 商家定制版 StatsWidget - Anzifan 目录适配版
- * 
- * 注意：由于你的项目目录结构中没有找到 useGlobal，
- * 我们通过组件 Props 获取数据，这是此类模板最稳健的传参方式。
+ * 商家定制版 StatsWidget - 动态链接修复版
+ * 直接从挂件自身的 data 属性读取 Notion 数据库中的 repost 链接
  */
-export const StatsWidget = ({ data, allPages }: { data: BlogStats, allPages?: any[] }) => {
+export const StatsWidget = ({ data }: { data: any }) => {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -18,16 +16,14 @@ export const StatsWidget = ({ data, allPages }: { data: BlogStats, allPages?: an
   if (!mounted) return null
 
   /**
-   * 动态链接获取逻辑：
-   * 1. 尝试从传入的 allPages 中查找 slug 为 stats 的条目
-   * 2. 如果没传 allPages，则 purchaseLink 默认为 '#'
+   * 核心修复逻辑：
+   * 在 Anzifan 模板中，挂件接收到的 data 参数就是你在 Notion 数据库中配置的那一行。
+   * 我们直接从 data 中提取 repost 属性。
    */
-  const statsWidgetItem = allPages?.find((p: any) => p.slug === 'stats')
-  const purchaseLink = statsWidgetItem?.repost || statsWidgetItem?.link || '#'
+  const purchaseLink = data?.repost || data?.link || '#'
 
   return (
     <WidgetContainer>
-      {/* 注入流光与扫光动画 */}
       <style jsx global>{`
         @keyframes shimmer { 0% { transform: translateX(-150%) skewX(-20deg); } 100% { transform: translateX(150%) skewX(-20deg); } }
         @keyframes borderFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
@@ -36,10 +32,10 @@ export const StatsWidget = ({ data, allPages }: { data: BlogStats, allPages?: an
       `}</style>
 
       <div className="relative h-full w-full group/card transition-all duration-300">
-        {/* 背景流光边缘 */}
+        {/* 背景流光 */}
         <div className="absolute -inset-[1px] rounded-[26px] bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 opacity-0 group-hover/card:opacity-70 blur-sm animate-border-flow transition-opacity duration-500"></div>
 
-        {/* 毛玻璃容器：p-4 sm:p-6 保证间距，min-h 保证高度 */}
+        {/* 毛玻璃容器 */}
         <div className="relative h-full w-full overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-[#0e0e0f]/80 backdrop-blur-2xl p-4 sm:p-6 flex flex-col justify-between min-h-[175px]">
           
           {/* 标题区域：保留绿色呼吸灯 */}
@@ -53,14 +49,15 @@ export const StatsWidget = ({ data, allPages }: { data: BlogStats, allPages?: an
              </span>
           </div>
 
-          {/* 单按钮区域：购买链接跳转 */}
+          {/* 单按钮区域：点击跳转 */}
           <div className="flex flex-col gap-3 w-full mb-2"> 
               <button 
                 onClick={() => {
                   if (purchaseLink && purchaseLink !== '#') {
                     window.open(purchaseLink, '_blank')
                   } else {
-                    alert('请在 Notion 的 stats 挂件条目中，于 repost 属性内填入购买链接')
+                    // 如果代码没读到，弹出具体的排查提示
+                    alert('未检测到链接，请确保 Notion 数据库中 stats 条目的 repost 属性已填写并已发布。')
                   }
                 }} 
                 type="button" 
@@ -72,9 +69,9 @@ export const StatsWidget = ({ data, allPages }: { data: BlogStats, allPages?: an
               </button>
           </div>
           
-          {/* 底部信息：PRO+ SUPPORT 放到右下角，并配合 pr-1 pb-2 实现微调上移 */}
+          {/* 底部信息：PRO+ SUPPORT 移至右下角并上移 (pb-2) */}
           <div className="mt-auto flex justify-end items-center pr-1 pb-2">
-            <span className="text-[7px] sm:text-[9px] text-gray-500/40 font-bold tracking-[0.1em] uppercase antialiased">
+            <span className="text-[7px] sm:text-[9px] text-gray-500/40 font-bold tracking-[0.15em] uppercase antialiased">
               PRO+ SUPPORT
             </span>
           </div>
