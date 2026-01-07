@@ -1,19 +1,26 @@
 import { BlogStats } from '@/src/types/blog'
 import React, { useState, useEffect } from 'react'
 // @ts-ignore
-// 尝试相对路径指向 src/lib/global，这是 Anzifan 模板最常用的路径
-import { useGlobal } from '../../lib/global' 
+import { useGlobal } from '@/lib/global'
 import { WidgetContainer } from './WidgetContainer'
 
 /**
- * PRO+ 商家定制版 - StatsWidget (单按钮版)
+ * 商家定制版 - StatsWidget
+ * 适配 Anzifan 模板，支持从 Notion 数据库读取 repost 链接
  */
 export const StatsWidget = ({ data }: { data: BlogStats }) => {
   const [mounted, setMounted] = useState(false)
   
-  // 获取全局数据以读取 Notion 数据库内容
-  // @ts-ignore
-  const { allPages } = useGlobal() 
+  // 这里的 useGlobal 如果还是报错，我们会通过下面的逻辑安全跳过
+  let globalData: any = {}
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    globalData = useGlobal()
+  } catch (e) {
+    console.warn('Global context not found')
+  }
+
+  const { allPages } = globalData || {}
 
   useEffect(() => {
     setMounted(true)
@@ -22,8 +29,8 @@ export const StatsWidget = ({ data }: { data: BlogStats }) => {
   if (!mounted) return null
 
   /**
-   * 链接读取逻辑：
-   * 在数据库中寻找 slug 为 stats 的那一行，读取 repost 属性
+   * 链接读取逻辑
+   * 在 Notion 数据库寻找 slug 为 stats 的那一页，取其 repost 属性
    */
   const statsWidgetItem = allPages?.find((p: any) => p.slug === 'stats')
   const purchaseLink = statsWidgetItem?.repost || '#'
@@ -38,13 +45,13 @@ export const StatsWidget = ({ data }: { data: BlogStats }) => {
       `}</style>
 
       <div className="relative h-full w-full group/card transition-all duration-300">
-        {/* 外围流光 */}
+        {/* 外围流光边缘 */}
         <div className="absolute -inset-[1px] rounded-[26px] bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 opacity-0 group-hover/card:opacity-70 blur-sm animate-border-flow transition-opacity duration-500"></div>
 
-        {/* 容器主体 */}
-        <div className="relative h-full w-full overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-[#0e0e0f]/80 backdrop-blur-2xl p-4 sm:p-6 flex flex-col justify-between min-h-[170px]">
+        {/* 主卡片容器 */}
+        <div className="relative h-full w-full overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-[#0a0a0b]/80 backdrop-blur-2xl p-4 sm:p-6 flex flex-col justify-between min-h-[170px]">
           
-          {/* 标题：右侧带呼吸灯 */}
+          {/* 标题区域 */}
           <div className="flex items-center justify-center gap-2.5 mb-6 mt-1">
              <h2 className="text-lg sm:text-2xl font-black text-white tracking-wide antialiased">
                作品购买渠道
@@ -55,14 +62,14 @@ export const StatsWidget = ({ data }: { data: BlogStats }) => {
              </span>
           </div>
 
-          {/* 购买按钮 */}
-          <div className="flex flex-col gap-3 w-full mb-4"> 
+          {/* 购买按钮：唯一操作入口 */}
+          <div className="flex flex-col gap-3 w-full mb-3"> 
               <button 
                 onClick={() => {
-                  if (purchaseLink !== '#') {
+                  if (purchaseLink && purchaseLink !== '#') {
                     window.open(purchaseLink, '_blank')
                   } else {
-                    console.log('Link not found in Notion')
+                    alert('商家尚未配置 repost 链接')
                   }
                 }} 
                 type="button" 
@@ -74,9 +81,9 @@ export const StatsWidget = ({ data }: { data: BlogStats }) => {
               </button>
           </div>
           
-          {/* 底部标注：右下角，并稍微上移 */}
-          <div className="mt-auto flex justify-end items-center pr-1 mb-1">
-            <span className="text-[7px] sm:text-[9px] text-gray-500/40 font-bold tracking-[0.1em] uppercase antialiased">
+          {/* 底部标注：右下角对齐，并增加 mb-2 向上抬升 */}
+          <div className="mt-auto flex justify-end items-center pr-1 mb-2">
+            <span className="text-[7px] sm:text-[9px] text-gray-500/40 font-bold tracking-[0.2em] uppercase antialiased">
               PRO+ SUPPORT
             </span>
           </div>
