@@ -117,7 +117,7 @@ export const StatsWidget = ({ data }: { data: BlogStats }) => {
   }, [])
 
   const handleCopy = useCallback(() => {
-    if (typeof navigator !== 'undefined') {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(SHOP_CODE)
       setIsCopied(true)
       setTimeout(() => setIsCopied(false), 2000)
@@ -126,6 +126,9 @@ export const StatsWidget = ({ data }: { data: BlogStats }) => {
 
   // 避免服务端渲染和客户端不一致
   if (!mounted) return null
+
+  // 处理文章总数显示，增加类型容错
+  const postsCount = (data as any)?.postsCount || (data as any)?.postCount || 0
 
   return (
     <WidgetContainer>
@@ -195,9 +198,9 @@ export const StatsWidget = ({ data }: { data: BlogStats }) => {
                 </button>
             </div>
             
-            {/* 底部小数据，呼应挂件功能 */}
+            {/* 底部小数据 */}
             <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase tracking-tighter">
-              <span>POSTS: {data?.postCount || 0}</span>
+              <span>POSTS: {postsCount}</span>
               <span className="flex items-center gap-1 text-emerald-500">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 SERVICE ONLINE
