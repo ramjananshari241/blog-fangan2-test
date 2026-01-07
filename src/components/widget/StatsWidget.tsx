@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react'
 import { WidgetContainer } from './WidgetContainer'
 
 /**
- * 商家定制版 StatsWidget - 深度模仿 Profile 读取逻辑
- * 具备“主动搜寻”能力，确保 100% 读取 Notion 数据库
+ * 商家定制版 StatsWidget - 最终冲刺版
+ * 深度复刻 ProfileWidget 读取逻辑，并加入全局数据抓取逻辑
  */
 export const StatsWidget = (props: any) => {
   const { data } = props
@@ -17,25 +17,26 @@ export const StatsWidget = (props: any) => {
   if (!mounted) return null
 
   /**
-   * 🛠️ 深度探测逻辑
-   * 
-   * 1. 优先尝试从直接传入的 data 中读取（模仿 Profile）
-   * 2. 如果失败，尝试从父级 props 的 notice 或其他属性中探测
+   * 🛠️ 属性探测逻辑 (这是最后一次尝试的重点)
    */
-  let targetData = data;
-  
-  // 如果当前 data 看起来只是统计数字（比如有 postCount），则尝试寻找真正的 Notion 行数据
-  if (!data?.repost && !data?.description && props?.widgets) {
-    targetData = props.widgets.find((w: any) => w.slug === 'stats');
-  }
+  let purchaseLink = '#';
 
-  // 最终提取链接：探测 repost (目标列) 或 description (对应 Notion 的 Excerpt 摘要列)
-  const purchaseLink = 
-    targetData?.repost || 
-    targetData?.description || 
-    targetData?.link || 
-    targetData?.url || 
-    '#';
+  // 1. 尝试常规路径 (repost, description, link)
+  const rawLink = data?.repost || data?.description || data?.link || data?.url;
+
+  // 2. 如果常规路径失败 (读到了 #)，尝试在全局 Next.js 缓存中寻找 slug 为 stats 的那一行
+  if (!rawLink || rawLink === '#') {
+    try {
+      // 尝试从 Next.js 注入的全局数据中探测 (Anzifan 模板通用后门)
+      const allPages = (window as any)?.__NEXT_DATA__?.props?.pageProps?.allPages;
+      const statsRow = allPages?.find((p: any) => p.slug === 'stats');
+      purchaseLink = statsRow?.repost || statsRow?.description || statsRow?.link || '#';
+    } catch (e) {
+      purchaseLink = '#';
+    }
+  } else {
+    purchaseLink = rawLink;
+  }
 
   return (
     <WidgetContainer>
@@ -47,11 +48,13 @@ export const StatsWidget = (props: any) => {
       `}</style>
 
       <div className="relative h-full w-full group/card transition-all duration-300">
+        {/* 背景流光 */}
         <div className="absolute -inset-[1px] rounded-[26px] bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 opacity-0 group-hover/card:opacity-70 blur-sm animate-border-flow transition-opacity duration-500"></div>
 
-        <div className="relative h-full w-full overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-[#0e0e0f]/80 backdrop-blur-2xl p-4 sm:p-6 flex flex-col justify-between min-h-[175px]">
+        {/* 主卡片：min-h 确保高度合适 */}
+        <div className="relative h-full w-full overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-[#0a0a0b]/80 backdrop-blur-2xl p-4 sm:p-6 flex flex-col justify-between min-h-[175px]">
           
-          {/* 标题区域 */}
+          {/* 标题区域：带呼吸灯 */}
           <div className="flex items-center justify-center gap-2.5 mb-6 mt-1">
              <h2 className="text-lg sm:text-2xl font-black text-white tracking-wide antialiased">
                作品购买渠道
@@ -62,16 +65,16 @@ export const StatsWidget = (props: any) => {
              </span>
           </div>
 
-          {/* 核心按钮区域 */}
+          {/* 单按钮区域 */}
           <div className="flex flex-col gap-3 w-full mb-3"> 
               <button 
                 onClick={() => {
                   if (purchaseLink && purchaseLink !== '#' && purchaseLink.toString().includes('http')) {
                     window.open(purchaseLink.toString().trim(), '_blank')
                   } else {
-                    // 调试模式：弹出当前对象的所有键名，帮我们精准定位
-                    const availableKeys = targetData ? Object.keys(targetData).join(', ') : 'null';
-                    alert(`未探测到链接。\n\n当前读取到的值为: "${purchaseLink}"\n可用字段: [${availableKeys}]\n\n请尝试在 Notion 的 stats 条目中，将链接同时填入 [repost] 栏和 [excerpt] 摘要栏。`);
+                    // 打印详细数据到控制台，如果失败你可以 F12 查看
+                    console.log('StatsWidget Link Detect Failed. Data Object:', data);
+                    alert(`链接未配置或配置未同步。\n\n[读取值]: ${purchaseLink}\n\n[操作指引]: 请确保在 Notion 中 stats 条目的 [excerpt] 栏填入链接，并检查 status 是否为 Published。`);
                   }
                 }} 
                 type="button" 
@@ -83,7 +86,7 @@ export const StatsWidget = (props: any) => {
               </button>
           </div>
           
-          {/* 底部信息：右下角对齐，pb-2 确保不贴边 */}
+          {/* 底部信息：PRO+ SUPPORT 居右并上浮 */}
           <div className="mt-auto flex justify-end items-center pr-1 pb-2">
             <span className="text-[7px] sm:text-[9px] text-gray-500/40 font-bold tracking-[0.15em] uppercase antialiased">
               PRO+ SUPPORT
