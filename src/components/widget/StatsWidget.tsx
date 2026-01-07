@@ -1,11 +1,13 @@
+/* eslint-disable @next/next/no-img-element */
 import React, { useState, useEffect } from 'react'
 import { WidgetContainer } from './WidgetContainer'
 
 /**
- * 商家定制版 StatsWidget - 深度探测版
- * 专门适配 Anzifan 模板的数据结构
+ * 商家定制版 StatsWidget
+ * 深度模仿 ProfileWidget 逻辑，实现直接读取 Notion 数据库属性
  */
-export const StatsWidget = ({ data }: { data: any }) => {
+export const StatsWidget = (props: any) => {
+  const { data } = props
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -15,20 +17,20 @@ export const StatsWidget = ({ data }: { data: any }) => {
   if (!mounted) return null
 
   /**
-   * 🛠️ 模仿 Profile 的核心读取逻辑
-   * 
-   * 由于 Anzifan 对 Stats 组件传递的数据通常不含属性列，
-   * 如果你在 [excerpt] 或 [repost] 填了链接，我们需要从以下字段中“抓取”：
+   * 🛠️ 深度模仿 Profile 读取逻辑
+   * 在 ProfileWidget 中，data.description 对应的是 Excerpt (摘要)
+   * 我们在这里增加对 repost 的探测，这是最稳健的方案
    */
   const purchaseLink = 
-    data?.description || // 对应 Notion 的 excerpt (摘要)
-    data?.repost ||      // 对应 Notion 的 repost
-    data?.link ||        // 可能的映射
-    data?.url ||         // 可能的映射
+    data?.repost ||             // 优先尝试直接读取 repost 属性
+    data?.description ||        // 模仿 Profile 读取 Excerpt (摘要) 的逻辑
+    data?.link ||               // 尝试自动映射的 link
+    data?.url ||                // 尝试自动映射的 url
     '#';
 
   return (
     <WidgetContainer>
+      {/* 注入 iOS 风格动画 */}
       <style jsx global>{`
         @keyframes shimmer { 0% { transform: translateX(-150%) skewX(-20deg); } 100% { transform: translateX(150%) skewX(-20deg); } }
         @keyframes borderFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
@@ -37,13 +39,13 @@ export const StatsWidget = ({ data }: { data: any }) => {
       `}</style>
 
       <div className="relative h-full w-full group/card transition-all duration-300">
-        {/* 背景流光 */}
+        {/* 背景流光边缘 - 与整体风格对齐 */}
         <div className="absolute -inset-[1px] rounded-[26px] bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 opacity-0 group-hover/card:opacity-70 blur-sm animate-border-flow transition-opacity duration-500"></div>
 
-        {/* 主容器：保持 iOS 磨砂质感 */}
+        {/* 毛玻璃主体容器 - 模仿 Profile 容器质感但保持 iOS 深色风格 */}
         <div className="relative h-full w-full overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-[#0e0e0f]/80 backdrop-blur-2xl p-4 sm:p-6 flex flex-col justify-between min-h-[175px]">
           
-          {/* 标题区域 */}
+          {/* 标题区域：保留您要求的绿色呼吸灯 */}
           <div className="flex items-center justify-center gap-2.5 mb-6 mt-1">
              <h2 className="text-lg sm:text-2xl font-black text-white tracking-wide antialiased">
                作品购买渠道
@@ -54,16 +56,17 @@ export const StatsWidget = ({ data }: { data: any }) => {
              </span>
           </div>
 
-          {/* 单按钮区域 */}
+          {/* 核心按钮区域：模仿 Profile 的 Link 交互感，但使用购买样式 */}
           <div className="flex flex-col gap-3 w-full mb-2"> 
               <button 
                 onClick={() => {
-                  // 只要包含 http 字符，就认为是一个有效链接
+                  // 只要字符串里包含 http，就认为是有效链接
                   if (purchaseLink && purchaseLink !== '#' && purchaseLink.toString().includes('http')) {
-                    window.open(purchaseLink.trim(), '_blank')
+                    window.open(purchaseLink.toString().trim(), '_blank')
                   } else {
-                    alert(`未检测到有效链接。\n\n当前读取到的值为: "${purchaseLink}"\n\n请尝试在 Notion 数据库 stats 条目的 [excerpt] 摘要列填入链接，并确保 status 为 Published。`)
-                    console.log('StatsWidget Debug Data:', data) // 方便开发者在控制台查看对象内容
+                    // 弹窗提示，并打印当前 data 结构供调试
+                    alert(`未在 stats 挂件中探测到链接。\n\n当前读取到的值为: "${purchaseLink}"\n\n请尝试在 Notion 数据库中将链接填入 stats 行的 [repost] 栏或 [excerpt] 栏。`)
+                    console.log('StatsWidget Received Data:', data)
                   }
                 }} 
                 type="button" 
@@ -75,7 +78,7 @@ export const StatsWidget = ({ data }: { data: any }) => {
               </button>
           </div>
           
-          {/* 底部支持文字：右下角 + pb-2 上移 */}
+          {/* 底部信息：移至右下角，使用浅灰色，并增加 pb-2 向上抬升 */}
           <div className="mt-auto flex justify-end items-center pr-1 pb-2">
             <span className="text-[7px] sm:text-[9px] text-gray-500/40 font-bold tracking-[0.15em] uppercase antialiased">
               PRO+ SUPPORT
